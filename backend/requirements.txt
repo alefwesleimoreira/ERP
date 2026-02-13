@@ -6,3 +6,6 @@ Flask-Migrate==4.0.5
 psycopg2-binary==2.9.9
 python-dotenv==1.0.0
 Werkzeug==3.0.1
+
+cd backend
+echo "gunicorn==21.2.0" >> requirements.txt
