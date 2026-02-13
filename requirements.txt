@@ -1,0 +1,2 @@
+cd backend
+   echo "gunicorn==21.2.0" >> requirements.txt
