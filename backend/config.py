@@ -6,10 +6,16 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
     
     # Configurações do banco de dados PostgreSQL
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'postgresql://postgres:senha@localhost/erp_roupas_infantis'
+   database_url = os.environ.get('DATABASE_URL') or \
+    'postgresql://postgres:senha@localhost/erp_roupas_infantis'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    
+    # Trocar postgresql:// por postgresql+psycopg://
+if database_url and database_url.startswith('postgres://'):
+    database_url = database_url.replace('postgres://', 'postgresql+psycopg://')
+elif database_url and database_url.startswith('postgresql://'):
+    database_url = database_url.replace('postgresql://', 'postgresql+psycopg://')
+
+    SQLALCHEMY_DATABASE_URI = database_url
     # Configurações JWT
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY') or 'jwt-secret-key-change-in-production'
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
