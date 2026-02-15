@@ -1,10 +1,3 @@
-cd /workspaces/ERP/backend
-
-# Fazer backup
-cp config.py config.py.backup
-
-# Substituir conteúdo
-cat > config.py << 'EOF'
 import os
 from datetime import timedelta
 
