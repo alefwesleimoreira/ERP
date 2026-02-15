@@ -5,7 +5,13 @@ import { FaShoppingCart, FaChartLine, FaDollarSign, FaUsers, FaBoxes, FaSignOutA
 import './index.css';
 
 // Configuração do Axios
-const apiBaseUrl = (process.env.REACT_APP_API_URL || 'http://localhost:5000').replace(/\/$/, '');
+const rawApiUrl = (process.env.REACT_APP_API_URL || 'http://localhost:5000').trim();
+
+// Aceita REACT_APP_API_URL com ou sem /api no final
+const apiBaseUrl = rawApiUrl
+  .replace(/\/$/, '')
+  .replace(/\/api$/, '');
+
 const api = axios.create({
    baseURL: `${apiBaseUrl}/api`
 });
@@ -76,7 +82,11 @@ function Login() {
     try {
       await login(email, senha);
     } catch (err) {
-      setErro(err.response?.data?.erro || 'Erro ao fazer login');
+       if (!err.response) {
+        setErro('Não foi possível conectar ao backend. Verifique a URL da API no Vercel (REACT_APP_API_URL).');
+      } else {
+        setErro(err.response?.data?.erro || 'Erro ao fazer login');
+      }
     } finally {
       setLoading(false);
     }
