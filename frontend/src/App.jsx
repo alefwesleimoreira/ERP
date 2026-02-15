@@ -1,14 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
 import axios from 'axios';
-import {
-  FaShoppingCart,
-  FaChartLine,
-  FaDollarSign,
-  FaUsers,
-  FaBoxes,
-  FaSignOutAlt
-} from 'react-icons/fa';
+import { FaShoppingCart, FaChartLine, FaDollarSign, FaUsers, FaBoxes, FaSignOutAlt } from 'react-icons/fa';
 import './index.css';
 
 // Configuração do Axios
