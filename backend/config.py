@@ -25,3 +25,6 @@ class Config:
     MOEDA = 'BRL'
     FRETE_GRATIS_ACIMA = 200.00
     ESTOQUE_MINIMO_ALERTA = 5
+    
+ # Ambiente/deploy
+    AUTO_SEED_DEMO_ADMIN = os.environ.get('AUTO_SEED_DEMO_ADMIN', 'true').lower() == 'true'
