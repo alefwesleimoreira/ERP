@@ -5,8 +5,9 @@ import { FaShoppingCart, FaChartLine, FaDollarSign, FaUsers, FaBoxes, FaSignOutA
 import './index.css';
 
 // Configuração do Axios
+const apiBaseUrl = (process.env.REACT_APP_API_URL || 'http://localhost:5000').replace(/\/$/, '');
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api'
+   baseURL: `${apiBaseUrl}/api`
 });
 
 // Interceptor para adicionar token
