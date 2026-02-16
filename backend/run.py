@@ -37,10 +37,12 @@ def init_database():
         # Criar usuários
         admin = Usuario(
             nome='Administrador',
-            email='admin@loja.com',
-            senha=generate_password_hash('admin123'),
+            email='admin@loja.com'
             tipo='admin'
         )
+
+        admin.set_senha('admin123')
+        
         db.session.add(admin)
         
         # Criar categorias
