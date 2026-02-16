@@ -52,7 +52,7 @@ def create_app(config_class=Config):
     app.register_blueprint(financeiro.bp)
     app.register_blueprint(dashboard.bp)
 
-     with app.app_context():
-        _bootstrap_demo_admin(app)
+with app.app_context():
+     _bootstrap_demo_admin(app)
     
     return app
