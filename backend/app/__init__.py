@@ -1,58 +1,114 @@
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from flask_jwt_extended import JWTManager
-from flask_cors import CORS
-from flask_migrate import Migrate
-from sqlalchemy import inspect
-from config import Config
+from app import create_app, db
+from app.models import *
+import os
 
-db = SQLAlchemy()
-jwt = JWTManager()
-migrate = Migrate()
+app = create_app()
 
-def _bootstrap_demo_admin(app):
-    """Garante um usuário admin demo para primeiro acesso em ambientes novos."""
-    auto_seed = app.config.get('AUTO_SEED_DEMO_ADMIN', True)
-    if not auto_seed:
-        return
-
-    from app.models import Usuario
-
-    inspector = inspect(db.engine)
-    if not inspector.has_table('usuarios'):
-        return
-
-    if Usuario.query.filter_by(email='admin@loja.com').first():
-        return
-
-    admin = Usuario(nome='Administrador', email='admin@loja.com', tipo='admin', ativo=True)
-    admin.set_senha('admin123')
-    db.session.add(admin)
-    db.session.commit()
-
-def create_app(config_class=Config):
-    app = Flask(__name__)
-    app.config.from_object(config_class)
-    
-    # Inicializar extensões
-    db.init_app(app)
-    jwt.init_app(app)
-    migrate.init_app(app, db)
-    CORS(app)
-    
-    # Registrar blueprints
-    from app.routes import auth, produtos, vendas, estoque, clientes, fornecedores, financeiro, dashboard
-    
-    app.register_blueprint(auth.bp)
-    app.register_blueprint(produtos.bp)
-    app.register_blueprint(vendas.bp)
-    app.register_blueprint(estoque.bp)
-    app.register_blueprint(clientes.bp)
-    app.register_blueprint(fornecedores.bp)
-    app.register_blueprint(financeiro.bp)
-    app.register_blueprint(dashboard.bp)
-
+# Inicializar banco automaticamente
+if os.environ.get('FLASK_ENV') == 'production':
     with app.app_context():
-     _bootstrap_demo_admin(app)
-    
-    return app
+        try:
+            db.create_all()
+            print("✅ Banco de dados verificado/criado!")
+        except Exception as e:
+            print(f"⚠️  Aviso: {e}")
+
+@app.route('/')
+def index():
+    return {
+        'mensagem': '🛍️ ERP Roupas Infantis - API',
+        'versao': '1.0.0',
+        'status': 'online',
+        'init_url': '/init-db'
+    }
+
+@app.route('/init-db')
+def init_database():
+    """Inicializa banco com dados de exemplo - execute UMA VEZ apenas!"""
+    try:
+        from datetime import datetime, timedelta
+        import random
+        from werkzeug.security import generate_password_hash
+        
+        # Verificar se já tem dados
+        if Usuario.query.first():
+            return {'erro': 'Banco já inicializado!'}, 400
+        
+        # Criar usuários
+        admin = Usuario(
+            nome='Administrador',
+            email='admin@loja.com',
+            senha=generate_password_hash('admin123'),
+            tipo='admin'
+        )
+        db.session.add(admin)
+        
+        # Criar categorias
+        categorias = [
+            Categoria(nome='Bodies', descricao='Bodies para bebês'),
+            Categoria(nome='Macacões', descricao='Macacões infantis'),
+            Categoria(nome='Conjuntos', descricao='Conjuntos de roupas'),
+        ]
+        for cat in categorias:
+            db.session.add(cat)
+        
+        db.session.commit()
+        
+        # Criar produtos
+        produtos_data = [
+            {'nome': 'Body Manga Curta', 'categoria_id': 1, 'preco': 29.90},
+            {'nome': 'Macacão Longo', 'categoria_id': 2, 'preco': 79.90},
+            {'nome': 'Conjunto Verão', 'categoria_id': 3, 'preco': 59.90},
+        ]
+        
+        for p_data in produtos_data:
+            produto = Produto(
+                codigo=f'PROD{random.randint(1000,9999)}',
+                nome=p_data['nome'],
+                descricao='Produto de qualidade',
+                categoria_id=p_data['categoria_id'],
+                preco_custo=p_data['preco'] * 0.5,
+                preco_venda=p_data['preco'],
+                estoque_atual=50,
+                estoque_minimo=10,
+                genero='unissex',
+                faixa_etaria='0-6 meses',
+                ativo=True
+            )
+            db.session.add(produto)
+        
+        db.session.commit()
+        
+        return {
+            'sucesso': True,
+            'mensagem': '✅ Banco inicializado com sucesso!',
+            'usuarios': 1,
+            'categorias': len(categorias),
+            'produtos': len(produtos_data)
+        }
+        
+    except Exception as e:
+        db.session.rollback()
+        return {'erro': str(e)}, 500
+
+@app.route('/health')
+def health():
+    return {'status': 'ok'}
+
+@app.shell_context_processor
+def make_shell_context():
+    return {
+        'db': db,
+        'Usuario': Usuario,
+        'Cliente': Cliente,
+        'Fornecedor': Fornecedor,
+        'Produto': Produto,
+        'Categoria': Categoria,
+        'Venda': Venda,
+        'ItemVenda': ItemVenda,
+        'MovimentacaoEstoque': MovimentacaoEstoque,
+        'Financeiro': Financeiro
+    }
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=5000)
