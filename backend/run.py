@@ -1,9 +1,35 @@
 from app import create_app, db
 from app.models import *
+from app.models import Usuario
 import os
 
 app = create_app()
 
+inicializar_banco()
+
+def inicializar_banco():
+    with app.app_context():
+        db.create_all()
+
+        # Verifica se já existe usuário
+        if not Usuario.query.first():
+            print("🔧 Inicializando banco de dados...")
+
+            admin = Usuario(
+                nome="Administrador",
+                email="admin@loja.com",
+                tipo="admin",
+                ativo=True
+            )
+            admin.set_senha("admin123")
+
+            db.session.add(admin)
+            db.session.commit()
+
+            print("✅ Banco inicializado com sucesso!")
+        else:
+            print("✔ Banco já inicializado.")
+            
 # Inicializar banco automaticamente
 if os.environ.get('FLASK_ENV') == 'production':
     with app.app_context():
