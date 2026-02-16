@@ -37,8 +37,8 @@ def init_database():
         # Criar usuários
         admin = Usuario(
             nome='Administrador',
-            email='admin@loja.com'
-            tipo='admin'
+            email='admin@loja.com',
+            tipo='admin',
         )
 
         admin.set_senha('admin123')
