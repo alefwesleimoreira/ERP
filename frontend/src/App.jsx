@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, Navigate, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { FaShoppingCart, FaChartLine, FaDollarSign, FaUsers, FaBoxes, FaSignOutAlt } from 'react-icons/fa';
 import './index.css';
@@ -34,25 +34,30 @@ function AuthProvider({ children }) {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (token) {
-      api.get('/auth/me')
-        .then(res => setUser(res.data))
-        .catch(() => localStorage.removeItem('token'))
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
+    const savedUser = localStorage.getItem('user');
+    
+    if (token && savedUser) {
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (e) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
     }
+    setLoading(false);
   }, []);
 
   const login = async (email, senha) => {
     const res = await api.post('/auth/login', { email, senha });
     localStorage.setItem('token', res.data.access_token);
+    localStorage.setItem('user', JSON.stringify(res.data.usuario));
     setUser(res.data.usuario);
     return res.data;
   };
 
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setUser(null);
   };
 
@@ -73,6 +78,7 @@ function Login() {
   const [erro, setErro] = useState('');
   const { login } = useAuth();
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -81,11 +87,12 @@ function Login() {
     
     try {
       await login(email, senha);
+      navigate('/admin');
     } catch (err) {
-       if (!err.response) {
+      if (!err.response) {
         setErro('Não foi possível conectar ao backend. Verifique a URL da API no Vercel (REACT_APP_API_URL).');
       } else {
-        setErro(err.response?.data?.erro || 'Erro ao fazer login');
+        setErro(err.response?.data?.erro || 'Credenciais inválidas');
       }
     } finally {
       setLoading(false);
@@ -271,6 +278,12 @@ function ProdutoCard({ produto }) {
 // Sidebar do Admin
 function AdminSidebar() {
   const { logout } = useAuth();
+  const navigate = useNavigate();
+  
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
   
   const menuItems = [
     { icon: <FaChartLine />, label: 'Dashboard', path: '/admin' },
@@ -298,7 +311,7 @@ function AdminSidebar() {
       </nav>
       
       <button
-        onClick={logout}
+        onClick={handleLogout}
         className="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-700 transition-colors w-full mt-8"
       >
         <FaSignOutAlt />
@@ -320,7 +333,7 @@ function Dashboard() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div>Carregando...</div>;
+  if (loading) return <div className="p-8">Carregando...</div>;
 
   return (
     <div className="p-8">
@@ -444,7 +457,7 @@ function AdminFinanceiro() {
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
   
-  if (loading) return <div>Carregando...</div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
   
   return user ? children : <Navigate to="/login" />;
 }
