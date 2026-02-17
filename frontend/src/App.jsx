@@ -76,10 +76,16 @@ function Login() {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [erro, setErro] = useState('');
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    if (user) {
+      navigate('/admin', { replace: true });
+    }
+  }, [user, navigate]);
+ 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErro('');
@@ -87,7 +93,7 @@ function Login() {
     
     try {
       await login(email, senha);
-      navigate('/admin');
+      navigate('/admin', {replace: true});
     } catch (err) {
       if (!err.response) {
         setErro('Não foi possível conectar ao backend. Verifique a URL da API no Vercel (REACT_APP_API_URL).');
@@ -459,7 +465,7 @@ function ProtectedRoute({ children }) {
   
   if (loading) return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
   
-  return user ? children : <Navigate to="/login" />;
+  return user ? children : <Navigate to="/login" replace/>;
 }
 
 // App Principal
